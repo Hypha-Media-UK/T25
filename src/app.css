@@ -51,7 +51,7 @@ input {
 	font-size: inherit;
 	border: 2px solid var(--border);
 	border-radius: var(--radius-sm);
-	padding: 12px 16px;
+	padding: 12px 10px;
 	background: var(--surface);
 	transition: border-color 0.2s, box-shadow 0.2s;
 }

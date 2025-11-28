@@ -296,16 +296,12 @@
 
 	section[data-add] {
 		display: grid;
-		grid-template-columns: 1fr auto auto;
+		grid-template-columns: 1fr 50px auto;
 		gap: 8px;
 	}
 
 	section[data-add] > h2 {
 		grid-column: 1 / -1;
-	}
-
-	section[data-add] > input[type="number"] {
-		width: 70px;
 	}
 
 	section > button {
