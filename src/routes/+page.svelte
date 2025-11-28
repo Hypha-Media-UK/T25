@@ -9,18 +9,37 @@
 	let selectedDate = $state('');
 	let checkResult = $state<boolean | null>(null);
 
-	// Category color themes
-	const categoryColors: Record<string, { bg: string; bgFade: string; accent: string }> = {
-		'Alcohol': { bg: '#ede7b1', bgFade: '#f6f3d8', accent: '#ca8a04' },
-		'Tobacco': { bg: '#e4c1f9', bgFade: '#f1e0fc', accent: '#9333ea' },
-		'Gambling': { bg: '#f694c1', bgFade: '#fbc9df', accent: '#db2777' },
-		'Meds': { bg: '#d3f8e2', bgFade: '#e9fcf1', accent: '#16a34a' },
-		'Fireworks': { bg: '#a9def9', bgFade: '#d4effc', accent: '#0284c7' }
+	const defaultColor = { bg: '#ede7b1', accent: '#ca8a04' };
+
+	// Get colors from active category or fallback to default
+	const getColor = () => {
+		const bg = activeCategory?.color_bg ?? defaultColor.bg;
+		const accent = activeCategory?.color_accent ?? defaultColor.accent;
+		// Calculate a lighter fade version of the background
+		const bgFade = lightenColor(bg, 0.5);
+		return { bg, bgFade, accent };
 	};
 
-	const defaultColor = { bg: '#a9def9', bgFade: '#d4effc', accent: '#0284c7' };
+	// Lighten a hex color by a factor (0-1)
+	const lightenColor = (hex: string, factor: number): string => {
+		const r = parseInt(hex.slice(1, 3), 16);
+		const g = parseInt(hex.slice(3, 5), 16);
+		const b = parseInt(hex.slice(5, 7), 16);
+		const newR = Math.round(r + (255 - r) * factor);
+		const newG = Math.round(g + (255 - g) * factor);
+		const newB = Math.round(b + (255 - b) * factor);
+		return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+	};
 
-	const getColor = () => categoryColors[activeCategory?.name ?? ''] ?? defaultColor;
+	// Calculate relative luminance and return appropriate text colour
+	const getContrastText = (hex: string): string => {
+		const r = parseInt(hex.slice(1, 3), 16);
+		const g = parseInt(hex.slice(3, 5), 16);
+		const b = parseInt(hex.slice(5, 7), 16);
+		// Using perceived luminance formula with stricter threshold
+		const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+		return luminance > 180 ? '#1a1a1a' : '#ffffff';
+	};
 
 	// Calculate cutoff date for current category
 	const getCutoffDate = () => {
@@ -73,7 +92,7 @@
 	});
 </script>
 
-<main style="--cat-accent: {getColor().accent}; --cat-bg: {getColor().bg}; --cat-bg-fade: {getColor().bgFade}">
+<main style="--cat-accent: {getColor().accent}; --cat-bg: {getColor().bg}; --cat-bg-fade: {getColor().bgFade}; --cat-text: {getContrastText(getColor().accent)}">
 	<section data-topbar>
 		<span>{activeCategory?.name ?? ''}</span>
 		<button data-hamburger onclick={() => menuOpen = !menuOpen} aria-label="Open menu">
@@ -94,22 +113,24 @@
 	{#if menuOpen}
 		<aside data-menu>
 			<button data-backdrop onclick={() => menuOpen = false} aria-label="Close menu"></button>
-			<ul>
-				{#each categories as cat}
-					{@const color = categoryColors[cat.name] ?? defaultColor}
-					<li>
-						<button
-							data-active={activeCategory?.id === cat.id || undefined}
-							onclick={() => { activeCategory = cat; menuOpen = false; }}
-							style="--btn-accent: {color.accent}; --btn-bg: {color.bg}"
-						>{cat.name}</button>
-					</li>
-				{/each}
-			</ul>
+			<nav>
+				<ul>
+					{#each categories as cat}
+						<li>
+							<button
+								data-active={activeCategory?.id === cat.id || undefined}
+								onclick={() => { activeCategory = cat; menuOpen = false; }}
+								style="--btn-accent: {cat.color_accent}; --btn-bg: {cat.color_bg}"
+							>{cat.name}</button>
+						</li>
+					{/each}
+				</ul>
+				<a href="/settings">Settings</a>
+			</nav>
 		</aside>
 	{/if}
 
-	<button data-check-trigger onclick={() => checkerOpen = true}>Check a date</button>
+	<button data-check-trigger onclick={() => checkerOpen = true}>Manually add a D.O.B.</button>
 
 	{#if checkerOpen}
 		<aside data-checker>
@@ -134,9 +155,6 @@
 		</aside>
 	{/if}
 
-	<nav>
-		<a href="/settings">Settings</a>
-	</nav>
 </main>
 
 <style>
@@ -144,7 +162,7 @@
 		min-height: 100dvh;
 		padding: var(--spacing);
 		display: grid;
-		grid-template-rows: auto 1fr auto auto;
+		grid-template-rows: auto 1fr auto;
 		gap: var(--spacing);
 		background: linear-gradient(180deg, var(--cat-bg-fade) 0%, var(--bg) 100%);
 	}
@@ -210,7 +228,7 @@
 		animation: fadeIn 0.3s ease-out;
 	}
 
-	aside[data-menu] > ul {
+	aside[data-menu] > nav {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -218,13 +236,19 @@
 		width: 280px;
 		max-width: 80vw;
 		background: var(--surface);
-		list-style: none;
 		padding: var(--spacing);
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
-		overflow-y: auto;
 		animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	aside[data-menu] ul {
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		flex: 1;
+		overflow-y: auto;
 	}
 
 	aside[data-menu] li > button {
@@ -241,6 +265,16 @@
 		background: var(--btn-bg);
 		color: var(--btn-accent);
 		font-weight: 600;
+	}
+
+	aside[data-menu] > nav > a {
+		padding: 16px;
+		text-align: left;
+		font-size: 1.1rem;
+		font-weight: 500;
+		color: var(--text);
+		border-top: 1px solid var(--border);
+		margin-top: auto;
 	}
 
 	@keyframes slideIn {
@@ -290,12 +324,11 @@
 	/* Date checker trigger */
 	button[data-check-trigger] {
 		padding: 14px 24px;
-		background: var(--surface);
-		border: 2px solid var(--border);
+		background: var(--cat-accent);
 		border-radius: var(--radius);
-		font-weight: 500;
+		font-weight: 700;
 		font-size: 1rem;
-		color: var(--text-muted);
+		color: var(--cat-text);
 	}
 
 	/* Date checker modal */
@@ -368,18 +401,5 @@
 	output[data-error] {
 		background: var(--error-light);
 		color: var(--error);
-	}
-
-	/* Navigation */
-	nav {
-		text-align: center;
-		padding: 8px;
-	}
-
-	nav > a {
-		padding: 12px 24px;
-		display: inline-block;
-		color: var(--text-muted);
-		font-weight: 500;
 	}
 </style>

@@ -53,7 +53,7 @@
 	const updateCategory = async (cat: Category) => {
 		await supabase
 			.from('categories')
-			.update({ name: cat.name, min_age: cat.min_age })
+			.update({ name: cat.name, min_age: cat.min_age, color_bg: cat.color_bg, color_accent: cat.color_accent })
 			.eq('id', cat.id);
 		editingId = null;
 	};
@@ -100,12 +100,22 @@
 				{#each categories as cat (cat.id)}
 					<li>
 						{#if editingId === cat.id}
-							<input type="text" bind:value={cat.name} />
+							<input type="text" bind:value={cat.name} placeholder="Name" />
 							<input type="number" bind:value={cat.min_age} min="1" max="99" />
+							<fieldset>
+								<label>
+									Background
+									<input type="color" bind:value={cat.color_bg} />
+								</label>
+								<label>
+									Accent
+									<input type="color" bind:value={cat.color_accent} />
+								</label>
+							</fieldset>
 							<button onclick={() => updateCategory(cat)}>Save</button>
 							<button onclick={() => editingId = null}>Cancel</button>
 						{:else}
-							<span>{cat.name}</span>
+							<span style="background: {cat.color_bg}; color: {cat.color_accent}">{cat.name}</span>
 							<em>Age {cat.min_age}+</em>
 							<button onclick={() => editingId = cat.id}>Edit</button>
 							<button data-danger onclick={() => deleteCategory(cat.id)}>Delete</button>
@@ -197,6 +207,33 @@
 
 	li > span {
 		font-weight: 600;
+		padding: 4px 10px;
+		border-radius: var(--radius-sm);
+	}
+
+	li > fieldset {
+		display: flex;
+		gap: 12px;
+		border: none;
+		padding: 0;
+		width: 100%;
+	}
+
+	li > fieldset > label {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+	}
+
+	li > fieldset input[type="color"] {
+		width: 36px;
+		height: 36px;
+		padding: 2px;
+		border: 2px solid var(--border);
+		border-radius: var(--radius-sm);
+		cursor: pointer;
 	}
 
 	li > em {

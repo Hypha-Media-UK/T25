@@ -8,6 +8,8 @@ export type Category = {
 	name: string;
 	min_age: number;
 	sort_order: number;
+	color_bg: string;
+	color_accent: string;
 };
 
 export type Settings = {
