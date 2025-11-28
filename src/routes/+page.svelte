@@ -358,6 +358,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+		overflow: hidden;
 		animation: contentIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
@@ -369,12 +370,14 @@
 
 	aside[data-checker] input[type="date"] {
 		width: 100%;
-		box-sizing: border-box;
+		min-width: 0;
 		padding: 16px;
 		font-size: 1.1rem;
 		text-align: center;
 		border: 2px solid var(--border);
 		border-radius: var(--radius-sm);
+		-webkit-appearance: none;
+		appearance: none;
 	}
 
 	aside[data-checker] button:not([data-backdrop]) {
