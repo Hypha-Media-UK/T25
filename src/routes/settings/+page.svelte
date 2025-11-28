@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { supabase, type Category } from '$lib/supabase';
+	import { onMount } from 'svelte';
+
+	const AUTH_KEY = 'think25_auth';
+	const AUTH_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
 
 	let authenticated = $state(false);
 	let passwordInput = $state('');
@@ -11,6 +15,21 @@
 	let editingId = $state<string | null>(null);
 	let newPassword = $state('');
 	let showPasswordChange = $state(false);
+	let loading = $state(true);
+
+	onMount(async () => {
+		const stored = localStorage.getItem(AUTH_KEY);
+		if (stored) {
+			const { expiry } = JSON.parse(stored);
+			if (expiry > Date.now()) {
+				authenticated = true;
+				await loadCategories();
+			} else {
+				localStorage.removeItem(AUTH_KEY);
+			}
+		}
+		loading = false;
+	});
 
 	const login = async () => {
 		const { data } = await supabase
@@ -22,6 +41,7 @@
 		if (data && data.value === passwordInput) {
 			authenticated = true;
 			adminPassword = data.value;
+			localStorage.setItem(AUTH_KEY, JSON.stringify({ expiry: Date.now() + AUTH_DURATION }));
 			await loadCategories();
 		} else {
 			passwordError = true;
@@ -73,6 +93,12 @@
 		newPassword = '';
 		showPasswordChange = false;
 	};
+
+	const logout = () => {
+		localStorage.removeItem(AUTH_KEY);
+		authenticated = false;
+		passwordInput = '';
+	};
 </script>
 
 <main>
@@ -81,7 +107,11 @@
 		<h1>Settings</h1>
 	</header>
 
-	{#if !authenticated}
+	{#if loading}
+		<section data-login>
+			<p>Loading...</p>
+		</section>
+	{:else if !authenticated}
 		<section data-login>
 			<h2>Enter Password</h2>
 			<input
@@ -140,6 +170,7 @@
 				<button onclick={() => showPasswordChange = false}>Cancel</button>
 			{:else}
 				<button onclick={() => showPasswordChange = true}>Change Password</button>
+				<button data-secondary onclick={logout}>Log Out</button>
 			{/if}
 		</section>
 	{/if}
@@ -283,6 +314,12 @@
 		color: white;
 		border-radius: var(--radius-sm);
 		font-weight: 600;
+	}
+
+	section > button[data-secondary] {
+		background: var(--bg);
+		color: var(--text-muted);
+		border: 2px solid var(--border);
 	}
 
 	input[data-error] {
