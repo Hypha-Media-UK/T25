@@ -376,6 +376,7 @@
 		text-align: center;
 		border: 2px solid var(--border);
 		border-radius: var(--radius-sm);
+		color: var(--text);
 		-webkit-appearance: none;
 		appearance: none;
 	}
