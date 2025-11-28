@@ -197,8 +197,8 @@
 	aside[data-menu] > button[data-backdrop] {
 		position: absolute;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		animation: fadeIn 0.2s ease;
+		background: rgba(0, 0, 0, 0.3);
+		animation: fadeIn 0.3s ease-out;
 	}
 
 	aside[data-menu] > ul {
@@ -215,7 +215,7 @@
 		flex-direction: column;
 		gap: 4px;
 		overflow-y: auto;
-		animation: slideIn 0.25s ease;
+		animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	aside[data-menu] li > button {
@@ -248,7 +248,7 @@
 		font-weight: 800;
 		line-height: 1;
 		color: var(--cat-accent);
-		animation: fadeIn 0.25s ease;
+		animation: contentIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	section[data-display] > p {
@@ -257,19 +257,20 @@
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
 		font-weight: 600;
+		animation: contentIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
 	}
 
 	section[data-display] > time {
 		font-size: clamp(2rem, 7vw, 3rem);
 		font-weight: 700;
 		color: var(--cat-accent);
-		animation: fadeIn 0.25s ease;
+		animation: contentIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 	}
 
-	@keyframes fadeIn {
+	@keyframes contentIn {
 		from {
 			opacity: 0;
-			transform: translateY(4px);
+			transform: translateY(10px);
 		}
 		to {
 			opacity: 1;
