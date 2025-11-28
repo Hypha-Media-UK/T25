@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { supabase, type Category } from '$lib/supabase';
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 
 	let authenticated = $state(false);
 	let passwordInput = $state('');
@@ -164,7 +162,7 @@
 		background: var(--surface);
 		border-radius: var(--radius);
 		padding: var(--spacing);
-		box-shadow: var(--shadow);
+		border: 2px solid var(--border);
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
@@ -192,13 +190,13 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 8px;
-		padding: 8px;
+		padding: 12px;
 		background: var(--bg);
-		border-radius: 8px;
+		border-radius: var(--radius-sm);
 	}
 
 	li > span {
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	li > em {
@@ -217,10 +215,11 @@
 	}
 
 	li > button {
-		padding: 6px 12px;
-		border-radius: 6px;
+		padding: 8px 14px;
+		border-radius: 8px;
 		background: var(--accent);
 		color: white;
+		font-weight: 500;
 	}
 
 	li > button[data-danger] {
@@ -242,10 +241,11 @@
 	}
 
 	section > button {
-		padding: 12px;
+		padding: 14px;
 		background: var(--accent);
 		color: white;
-		border-radius: 8px;
+		border-radius: var(--radius-sm);
+		font-weight: 600;
 	}
 
 	input[data-error] {

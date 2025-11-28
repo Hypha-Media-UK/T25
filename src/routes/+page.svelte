@@ -4,9 +4,21 @@
 
 	let categories = $state<Category[]>([]);
 	let activeCategory = $state<Category | null>(null);
-	let showDateChecker = $state(false);
 	let selectedDate = $state('');
 	let checkResult = $state<boolean | null>(null);
+
+	// Category color themes
+	const categoryColors: Record<string, { bg: string; bgFade: string; accent: string }> = {
+		'Alcohol': { bg: '#fef3c7', bgFade: '#fffbeb', accent: '#d97706' },
+		'Tobacco': { bg: '#fee2e2', bgFade: '#fef2f2', accent: '#dc2626' },
+		'Gambling': { bg: '#e0e7ff', bgFade: '#eef2ff', accent: '#4f46e5' },
+		'Meds': { bg: '#d1fae5', bgFade: '#ecfdf5', accent: '#059669' },
+		'Fireworks': { bg: '#fce7f3', bgFade: '#fdf2f8', accent: '#db2777' }
+	};
+
+	const defaultColor = { bg: '#e0e7ff', bgFade: '#eef2ff', accent: '#6366f1' };
+
+	const getColor = () => categoryColors[activeCategory?.name ?? ''] ?? defaultColor;
 
 	// Calculate cutoff date for current category
 	const getCutoffDate = () => {
@@ -59,169 +71,177 @@
 	});
 </script>
 
-<main>
-	<nav>
+<main style="--cat-accent: {getColor().accent}; --cat-bg: {getColor().bg}; --cat-bg-fade: {getColor().bgFade}">
+	<section data-tabs>
 		{#each categories as cat}
+			{@const color = categoryColors[cat.name] ?? defaultColor}
 			<button
 				data-active={activeCategory?.id === cat.id || undefined}
 				onclick={() => activeCategory = cat}
-			>
-				{cat.name}
-			</button>
+				style="--btn-accent: {color.accent}; --btn-bg: {color.bg}"
+			>{cat.name}</button>
 		{/each}
-	</nav>
+	</section>
 
-	<header>
+	<section data-display>
 		<strong>{activeCategory?.min_age ?? 18}</strong>
-		<span>IF BORN BEFORE</span>
+		<p>SINCE</p>
 		<time>{formatDate(getCutoffDate())}</time>
-	</header>
+	</section>
 
-	<details bind:open={showDateChecker} onclose={resetCheck}>
-		<summary>Check a date</summary>
-		<section>
-			{#if checkResult === null}
-				<input
-					type="date"
-					bind:value={selectedDate}
-					max={formatDateForInput(new Date())}
-				/>
-				<button onclick={checkAge}>Check</button>
-			{:else if checkResult}
-				<output data-success>✓ Yes, {activeCategory?.min_age}+</output>
-				<button onclick={resetCheck}>Check another</button>
-			{:else}
-				<output data-error>✗ No, under {activeCategory?.min_age}</output>
-				<button onclick={resetCheck}>Check another</button>
-			{/if}
-		</section>
-	</details>
+	<section data-checker>
+		{#if checkResult === null}
+			<input
+				type="date"
+				bind:value={selectedDate}
+				max={formatDateForInput(new Date())}
+			/>
+			<button onclick={checkAge}>Check Date</button>
+		{:else if checkResult}
+			<output data-success>Yes, {activeCategory?.min_age}+</output>
+			<button onclick={resetCheck}>Check another</button>
+		{:else}
+			<output data-error>No, under {activeCategory?.min_age}</output>
+			<button onclick={resetCheck}>Check another</button>
+		{/if}
+	</section>
 
-	<footer>
+	<nav>
 		<a href="/settings">Settings</a>
-	</footer>
+	</nav>
 </main>
 
 <style>
 	main {
 		min-height: 100dvh;
-		display: flex;
-		flex-direction: column;
 		padding: var(--spacing);
-		gap: var(--spacing);
+		display: grid;
+		grid-template-rows: auto 1fr auto auto;
+		background: linear-gradient(180deg, var(--cat-bg-fade) 0%, var(--bg) 100%);
+		transition: background 0.4s ease;
 	}
 
-	nav {
+	/* Tabs */
+	section[data-tabs] {
 		display: flex;
-		gap: 8px;
-		overflow-x: auto;
-		padding-bottom: 8px;
-		-webkit-overflow-scrolling: touch;
+		gap: 2px;
+		padding: 0 2px;
 	}
 
-	nav > button {
-		padding: 10px 16px;
-		background: var(--surface);
-		border-radius: 20px;
-		white-space: nowrap;
-		box-shadow: var(--shadow);
-		transition: all 0.2s;
-	}
-
-	nav > button[data-active] {
-		background: var(--accent);
-		color: white;
-	}
-
-	header {
+	section[data-tabs] > button {
 		flex: 1;
+		padding: 12px 8px;
+		background: var(--surface);
+		border-radius: var(--radius) var(--radius) 0 0;
+		white-space: nowrap;
+		font-weight: 600;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		opacity: 0.7;
+		transition: all 0.2s ease;
+	}
+
+	section[data-tabs] > button[data-active] {
+		color: var(--btn-accent);
+		background: var(--cat-bg);
+		opacity: 1;
+	}
+
+	/* Age display */
+	section[data-display] {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		text-align: center;
-		gap: 8px;
+		gap: 12px;
+		padding: 20px;
+		background: var(--cat-bg);
+		border-radius: 0 0 var(--radius) var(--radius);
+		margin-top: 0;
+		margin-bottom: var(--spacing);
+		transition: background 0.3s ease;
 	}
 
-	header > strong {
-		font-size: clamp(6rem, 25vw, 10rem);
+	section[data-display] > strong {
+		font-size: clamp(7rem, 28vw, 12rem);
 		font-weight: 800;
 		line-height: 1;
-		color: var(--accent);
+		color: var(--cat-accent);
+		transition: color 0.3s ease;
 	}
 
-	header > span {
-		font-size: 1.25rem;
+	section[data-display] > p {
+		font-size: 1.1rem;
 		color: var(--text-muted);
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
-	}
-
-	header > time {
-		font-size: clamp(1.75rem, 6vw, 2.5rem);
+		letter-spacing: 0.15em;
 		font-weight: 600;
 	}
 
-	details {
-		background: var(--surface);
-		border-radius: var(--radius);
-		box-shadow: var(--shadow);
+	section[data-display] > time {
+		font-size: clamp(2rem, 7vw, 3rem);
+		font-weight: 700;
+		color: var(--cat-accent);
+		transition: color 0.3s ease;
 	}
 
-	summary {
-		padding: var(--spacing);
-		cursor: pointer;
-		text-align: center;
-		font-weight: 500;
-		color: var(--accent);
-	}
-
-	details > section {
-		padding: 0 var(--spacing) var(--spacing);
+	/* Date checker */
+	section[data-checker] {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+		background: var(--surface);
+		padding: var(--spacing);
+		border-radius: var(--radius);
+		border: 2px solid var(--border);
 	}
 
-	details input[type="date"] {
+	section[data-checker] input[type="date"] {
 		width: 100%;
-		padding: 14px;
+		padding: 16px;
 		font-size: 1.1rem;
+		text-align: center;
 	}
 
-	details section > button {
-		padding: 14px;
-		background: var(--accent);
+	section[data-checker] > button {
+		padding: 16px;
+		background: var(--cat-accent);
 		color: white;
-		border-radius: 8px;
-		font-weight: 500;
+		border-radius: var(--radius-sm);
+		font-weight: 600;
+		font-size: 1rem;
+		transition: background 0.3s ease;
 	}
 
 	output {
-		padding: 20px;
-		border-radius: 8px;
+		padding: 24px;
+		border-radius: var(--radius-sm);
 		text-align: center;
 		font-size: 1.5rem;
-		font-weight: 600;
+		font-weight: 700;
 	}
 
 	output[data-success] {
-		background: color-mix(in srgb, var(--success) 15%, transparent);
+		background: var(--success-light);
 		color: var(--success);
 	}
 
 	output[data-error] {
-		background: color-mix(in srgb, var(--error) 15%, transparent);
+		background: var(--error-light);
 		color: var(--error);
 	}
 
-	footer {
+	/* Navigation */
+	nav {
 		text-align: center;
-		padding: var(--spacing);
+		padding: 8px;
 	}
 
-	footer > a {
+	nav > a {
 		padding: 12px 24px;
 		display: inline-block;
+		color: var(--text-muted);
+		font-weight: 500;
 	}
 </style>
