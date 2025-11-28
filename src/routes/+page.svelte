@@ -5,19 +5,20 @@
 	let categories = $state<Category[]>([]);
 	let activeCategory = $state<Category | null>(null);
 	let menuOpen = $state(false);
+	let checkerOpen = $state(false);
 	let selectedDate = $state('');
 	let checkResult = $state<boolean | null>(null);
 
 	// Category color themes
 	const categoryColors: Record<string, { bg: string; bgFade: string; accent: string }> = {
-		'Alcohol': { bg: '#fef3c7', bgFade: '#fffbeb', accent: '#d97706' },
-		'Tobacco': { bg: '#fee2e2', bgFade: '#fef2f2', accent: '#dc2626' },
-		'Gambling': { bg: '#e0e7ff', bgFade: '#eef2ff', accent: '#4f46e5' },
-		'Meds': { bg: '#d1fae5', bgFade: '#ecfdf5', accent: '#059669' },
-		'Fireworks': { bg: '#fce7f3', bgFade: '#fdf2f8', accent: '#db2777' }
+		'Alcohol': { bg: '#ede7b1', bgFade: '#f6f3d8', accent: '#ca8a04' },
+		'Tobacco': { bg: '#e4c1f9', bgFade: '#f1e0fc', accent: '#9333ea' },
+		'Gambling': { bg: '#f694c1', bgFade: '#fbc9df', accent: '#db2777' },
+		'Meds': { bg: '#d3f8e2', bgFade: '#e9fcf1', accent: '#16a34a' },
+		'Fireworks': { bg: '#a9def9', bgFade: '#d4effc', accent: '#0284c7' }
 	};
 
-	const defaultColor = { bg: '#e0e7ff', bgFade: '#eef2ff', accent: '#6366f1' };
+	const defaultColor = { bg: '#a9def9', bgFade: '#d4effc', accent: '#0284c7' };
 
 	const getColor = () => categoryColors[activeCategory?.name ?? ''] ?? defaultColor;
 
@@ -85,7 +86,7 @@
 	<section data-display>
 		{#key activeCategory?.id}
 			<strong>{activeCategory?.min_age ?? 18}</strong>
-			<p>SINCE</p>
+			<p>IF BORN ON OR BEFORE</p>
 			<time>{formatDate(getCutoffDate())}</time>
 		{/key}
 	</section>
@@ -108,22 +109,30 @@
 		</aside>
 	{/if}
 
-	<section data-checker>
-		{#if checkResult === null}
-			<input
-				type="date"
-				bind:value={selectedDate}
-				max={formatDateForInput(new Date())}
-			/>
-			<button onclick={checkAge}>Check Date</button>
-		{:else if checkResult}
-			<output data-success>Yes, {activeCategory?.min_age}+</output>
-			<button onclick={resetCheck}>Check another</button>
-		{:else}
-			<output data-error>No, under {activeCategory?.min_age}</output>
-			<button onclick={resetCheck}>Check another</button>
-		{/if}
-	</section>
+	<button data-check-trigger onclick={() => checkerOpen = true}>Check a date</button>
+
+	{#if checkerOpen}
+		<aside data-checker>
+			<button data-backdrop onclick={() => { checkerOpen = false; resetCheck(); }} aria-label="Close checker"></button>
+			<section>
+				{#if checkResult === null}
+					<p>Enter date of birth</p>
+					<input
+						type="date"
+						bind:value={selectedDate}
+						max={formatDateForInput(new Date())}
+					/>
+					<button onclick={checkAge}>Check</button>
+				{:else if checkResult}
+					<output data-success>Yes, {activeCategory?.min_age}+</output>
+					<button onclick={resetCheck}>Check another</button>
+				{:else}
+					<output data-error>No, under {activeCategory?.min_age}</output>
+					<button onclick={resetCheck}>Check another</button>
+				{/if}
+			</section>
+		</aside>
+	{/if}
 
 	<nav>
 		<a href="/settings">Settings</a>
@@ -278,32 +287,69 @@
 		}
 	}
 
-	/* Date checker */
-	section[data-checker] {
+	/* Date checker trigger */
+	button[data-check-trigger] {
+		padding: 14px 24px;
+		background: var(--surface);
+		border: 2px solid var(--border);
+		border-radius: var(--radius);
+		font-weight: 500;
+		font-size: 1rem;
+		color: var(--text-muted);
+	}
+
+	/* Date checker modal */
+	aside[data-checker] {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
 		display: flex;
-		flex-direction: column;
-		gap: 12px;
+		align-items: center;
+		justify-content: center;
+	}
+
+	aside[data-checker] > button[data-backdrop] {
+		position: absolute;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.3);
+		animation: fadeIn 0.3s ease-out;
+	}
+
+	aside[data-checker] > section {
+		position: relative;
 		background: var(--surface);
 		padding: var(--spacing);
 		border-radius: var(--radius);
-		border: 2px solid var(--border);
+		width: calc(100% - var(--spacing) * 2);
+		max-width: 320px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		animation: contentIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
-	section[data-checker] input[type="date"] {
+	aside[data-checker] p {
+		text-align: center;
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+
+	aside[data-checker] input[type="date"] {
 		width: 100%;
 		padding: 16px;
 		font-size: 1.1rem;
 		text-align: center;
+		border: 2px solid var(--border);
+		border-radius: var(--radius-sm);
 	}
 
-	section[data-checker] > button {
+	aside[data-checker] button:not([data-backdrop]) {
 		padding: 16px;
 		background: var(--cat-accent);
 		color: white;
 		border-radius: var(--radius-sm);
 		font-weight: 600;
 		font-size: 1rem;
-		transition: background 0.3s ease;
 	}
 
 	output {
