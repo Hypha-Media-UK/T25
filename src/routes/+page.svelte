@@ -369,6 +369,7 @@
 
 	aside[data-checker] input[type="date"] {
 		width: 100%;
+		box-sizing: border-box;
 		padding: 16px;
 		font-size: 1.1rem;
 		text-align: center;
